@@ -2,6 +2,7 @@ package tech.power.RNBraintreeDropIn;
 
 import android.app.Activity;
 import android.content.Intent;
+
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
@@ -28,9 +29,20 @@ public class RNBraintreeDropInModule extends ReactContextBaseJavaModule {
 
   private boolean isVerifyingThreeDSecure = false;
 
+  private String nonceFromAppStart;
+  private String errorFromAppStart;
+
   public RNBraintreeDropInModule(ReactApplicationContext reactContext) {
     super(reactContext);
     reactContext.addActivityEventListener(mActivityListener);
+  }
+
+  @ReactMethod
+  public void getBraintreeResultFromAppStart(final Promise promise) {
+    WritableMap jsResult = Arguments.createMap();
+    jsResult.putString("nonce", nonceFromAppStart);
+    jsResult.putString("error", errorFromAppStart);
+    promise.resolve(jsResult);
   }
 
   @ReactMethod
@@ -96,9 +108,9 @@ public class RNBraintreeDropInModule extends ReactContextBaseJavaModule {
   private final ActivityEventListener mActivityListener = new BaseActivityEventListener() {
     @Override
     public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
-      super.onActivityResult(requestCode, resultCode, data);
+      super.onActivityResult(activity, requestCode, resultCode, data);
 
-      if (requestCode != DROP_IN_REQUEST || mPromise == null) {
+      if (requestCode != DROP_IN_REQUEST) {
         return;
       }
 
@@ -110,6 +122,7 @@ public class RNBraintreeDropInModule extends ReactContextBaseJavaModule {
         if (isVerifyingThreeDSecure && paymentMethodNonce instanceof CardNonce) {
           CardNonce cardNonce = (CardNonce) paymentMethodNonce;
           ThreeDSecureInfo threeDSecureInfo = cardNonce.getThreeDSecureInfo();
+
           if (!threeDSecureInfo.isLiabilityShiftPossible()) {
             mPromise.reject("3DSECURE_NOT_ABLE_TO_SHIFT_LIABILITY", "3D Secure liability cannot be shifted");
           } else if (!threeDSecureInfo.isLiabilityShifted()) {
@@ -117,14 +130,33 @@ public class RNBraintreeDropInModule extends ReactContextBaseJavaModule {
           } else {
             resolvePayment(paymentMethodNonce, deviceData);
           }
-        } else {
-          resolvePayment(paymentMethodNonce, deviceData);
         }
-      } else if (resultCode == Activity.RESULT_CANCELED) {
-        mPromise.reject("USER_CANCELLATION", "The user cancelled");
+        else {
+          if (mPromise == null) {
+            nonceFromAppStart = paymentMethodNonce.getNonce();
+          }
+          else {
+            resolvePayment(paymentMethodNonce, deviceData);
+          }
+        }
+
+      }
+      else if (resultCode == Activity.RESULT_CANCELED) {
+        if (mPromise == null) {
+          errorFromAppStart = "USER_CANCELLATION";
+        }
+        else {
+          mPromise.reject("USER_CANCELLATION", "The user cancelled");
+        }
+
       } else {
         Exception exception = (Exception) data.getSerializableExtra(DropInActivity.EXTRA_ERROR);
-        mPromise.reject(exception.getMessage(), exception.getMessage());
+        if (mPromise == null) {
+          errorFromAppStart = exception.getMessage();
+        }
+        else{
+          mPromise.reject(exception.getMessage(), exception.getMessage());
+        }
       }
 
       mPromise = null;
