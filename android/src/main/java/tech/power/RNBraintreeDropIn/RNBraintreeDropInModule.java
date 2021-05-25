@@ -46,6 +46,12 @@ public class RNBraintreeDropInModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
+  public void clearBraintreeResultFromAppStart() {
+    nonceFromAppStart = "";
+    errorFromAppStart = "";
+  }
+
+  @ReactMethod
   public void show(final ReadableMap options, final Promise promise) {
     isVerifyingThreeDSecure = false;
 
