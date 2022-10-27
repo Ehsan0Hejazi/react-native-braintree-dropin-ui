@@ -13,22 +13,22 @@ RCT_EXPORT_MODULE(RNBraintreeDropIn)
 RCT_EXPORT_METHOD(show:(NSDictionary*)options resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
 
-    if([options[@"darkTheme"] boolValue]){
-        if (@available(iOS 13.0, *)) {
-            BTUIKAppearance.sharedInstance.colorScheme = BTUIKColorSchemeDynamic;
-        } else {
-            BTUIKAppearance.sharedInstance.colorScheme = BTUIKColorSchemeDark;
-        }
-    } else {
-        BTUIKAppearance.sharedInstance.colorScheme = BTUIKColorSchemeLight;
-    }
-
-    if(options[@"fontFamily"]){
-        [BTUIKAppearance sharedInstance].fontFamily = options[@"fontFamily"];
-    }
-    if(options[@"boldFontFamily"]){
-        [BTUIKAppearance sharedInstance].boldFontFamily = options[@"boldFontFamily"];
-    }
+//    if([options[@"darkTheme"] boolValue]){
+//        if (@available(iOS 13.0, *)) {
+//            BTUIKAppearance.sharedInstance.colorScheme = BTUIKColorSchemeDynamic;
+//        } else {
+//            BTUIKAppearance.sharedInstance.colorScheme = BTUIKColorSchemeDark;
+//        }
+//    } else {
+//        BTUIKAppearance.sharedInstance.colorScheme = BTUIKColorSchemeLight;
+//    }
+//
+//    if(options[@"fontFamily"]){
+//        [BTUIKAppearance sharedInstance].fontFamily = options[@"fontFamily"];
+//    }
+//    if(options[@"boldFontFamily"]){
+//        [BTUIKAppearance sharedInstance].boldFontFamily = options[@"boldFontFamily"];
+//    }
 
     self.resolve = resolve;
     self.reject = reject;
@@ -50,7 +50,7 @@ RCT_EXPORT_METHOD(show:(NSDictionary*)options resolver:(RCTPromiseResolveBlock)r
             return;
         }
 
-        request.threeDSecureVerification = YES;
+//        request.threeDSecureVerification = YES;
         BTThreeDSecureRequest *threeDSecureRequest = [[BTThreeDSecureRequest alloc] init];
         threeDSecureRequest.amount = [NSDecimalNumber decimalNumberWithString:threeDSecureAmount.stringValue];
         request.threeDSecureRequest = threeDSecureRequest;
@@ -59,10 +59,10 @@ RCT_EXPORT_METHOD(show:(NSDictionary*)options resolver:(RCTPromiseResolveBlock)r
 
     BTAPIClient *apiClient = [[BTAPIClient alloc] initWithAuthorization:clientToken];
     self.dataCollector = [[BTDataCollector alloc] initWithAPIClient:apiClient];
-    [self.dataCollector collectCardFraudData:^(NSString * _Nonnull deviceDataCollector) {
-        // Save deviceData
-        self.deviceDataCollector = deviceDataCollector;
-    }];
+//    [self.dataCollector collectCardFraudData:^(NSString * _Nonnull deviceDataCollector) {
+//        // Save deviceData
+//        self.deviceDataCollector = deviceDataCollector;
+//    }];
 
     if([options[@"vaultManager"] boolValue]){
         request.vaultManager = YES;
@@ -100,7 +100,7 @@ RCT_EXPORT_METHOD(show:(NSDictionary*)options resolver:(RCTPromiseResolveBlock)r
     }else{
         request.applePayDisabled = YES;
     }
-    
+
     if(![options[@"payPal"] boolValue]){ //disable paypal
         request.paypalDisabled = YES;
     }
@@ -113,7 +113,7 @@ RCT_EXPORT_METHOD(show:(NSDictionary*)options resolver:(RCTPromiseResolveBlock)r
 
             if (error != nil) {
                 reject(error.localizedDescription, error.localizedDescription, error);
-            } else if (result.cancelled) {
+            } else if (result.isCanceled) {
                 reject(@"USER_CANCELLATION", @"The user cancelled", nil);
             } else {
                 if (threeDSecureOptions && [result.paymentMethod isKindOfClass:[BTCardNonce class]]) {
@@ -125,7 +125,7 @@ RCT_EXPORT_METHOD(show:(NSDictionary*)options resolver:(RCTPromiseResolveBlock)r
                     } else{
                         [[self class] resolvePayment:result deviceData:self.deviceDataCollector resolver:resolve];
                     }
-                } else if(result.paymentMethod == nil && (result.paymentOptionType == 16 || result.paymentOptionType == 18)){ //Apple Pay
+                } else if(result.paymentMethod == nil && (result.paymentMethodType == 16 || result.paymentMethodType == 18)){ //Apple Pay
                     // UIViewController *ctrl = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
                     // [ctrl presentViewController:self.viewController animated:YES completion:nil];
                     UIViewController *rootViewController = RCTPresentedViewController();
