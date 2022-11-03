@@ -59,10 +59,9 @@ RCT_EXPORT_METHOD(show:(NSDictionary*)options resolver:(RCTPromiseResolveBlock)r
 
     BTAPIClient *apiClient = [[BTAPIClient alloc] initWithAuthorization:clientToken];
     self.dataCollector = [[BTDataCollector alloc] initWithAPIClient:apiClient];
-//    [self.dataCollector collectCardFraudData:^(NSString * _Nonnull deviceDataCollector) {
-//        // Save deviceData
-//        self.deviceDataCollector = deviceDataCollector;
-//    }];
+    [self.dataCollector collectDeviceData:^(NSString * _Nonnull deviceData) {
+        self.deviceDataCollector = deviceData;
+    }];
 
     if([options[@"vaultManager"] boolValue]){
         request.vaultManager = YES;
